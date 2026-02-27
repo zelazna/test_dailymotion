@@ -1,0 +1,46 @@
+# Test override — usage:
+#   docker compose -f docker-compose.yml -f docker-compose.test.yml run --rm test
+#
+# This file extends docker-compose.yml; it does not stand alone.
+
+name: user-registration-api
+
+services:
+
+  db_test:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-appuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB_TEST:-testdb}
+    # In-RAM storage: fast and automatically wiped between runs.
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-appuser} -d ${POSTGRES_DB_TEST:-testdb}"]
+      interval: 3s
+      timeout: 3s
+      retries: 15
+      start_period: 5s
+    networks:
+      - backend
+
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test-runner
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-appuser}:${POSTGRES_PASSWORD:-changeme}@db_test:5432/${POSTGRES_DB_TEST:-testdb}
+      PYTHONPATH: /app
+    depends_on:
+      db_test:
+        condition: service_healthy
+    volumes:
+      # Mount only source directories — the full bind mount would hide /app/.venv.
+      - ./app:/app/app:ro
+      - ./tests:/app/tests:ro
+    command: ["pytest", "tests/", "-v", "--tb=short"]
+    networks:
+      - backend
+    restart: no
