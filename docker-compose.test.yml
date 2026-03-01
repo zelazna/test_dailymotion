@@ -16,6 +16,8 @@ services:
     # In-RAM storage: fast and automatically wiped between runs.
     tmpfs:
       - /var/lib/postgresql/data
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-appuser} -d ${POSTGRES_DB_TEST:-testdb}"]
       interval: 3s
@@ -40,6 +42,7 @@ services:
       # Mount only source directories — the full bind mount would hide /app/.venv.
       - ./app:/app/app:ro
       - ./tests:/app/tests:ro
+      - ./pyproject.toml:/app/pyproject.toml:ro
     command: ["pytest", "tests/", "-v", "--tb=short"]
     networks:
       - backend
