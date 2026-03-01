@@ -44,6 +44,15 @@ services:
       start_period: 15s
     networks:
       - backend
+    develop:
+      watch:
+        - path: ./app
+          action: sync+restart
+          target: /app/app
+        - path: ./pyproject.toml
+          action: rebuild
+        - path: ./uv.lock
+          action: rebuild
 
 volumes:
   postgres_data:
