@@ -41,8 +41,7 @@ async def create_user(conn: asyncpg.Connection, email: str, password_hash: str) 
         raise UniqueViolationError("Email already exists") from e
 
 
-async def get_user_by_email(conn: asyncpg.Connection, email: str) -> User | None:
-    query = """
+_USER_COLS = """
     SELECT u.id,
            u.email,
            u.created_at,
@@ -55,11 +54,10 @@ async def get_user_by_email(conn: asyncpg.Connection, email: str) -> User | None
            c.created_at AS code_created_at
     FROM users u
     LEFT JOIN verification_codes c ON c.user_id = u.id
-    WHERE u.email = $1
-    """
-    row = await conn.fetchrow(query, email)
-    if row is None:
-        return None
+"""
+
+
+def _row_to_user(row: asyncpg.Record) -> User:
     vc: VerificationCode | None = None
     if row["code_id"] is not None:
         vc = VerificationCode(
@@ -77,6 +75,23 @@ async def get_user_by_email(conn: asyncpg.Connection, email: str) -> User | None
         is_active=row["is_active"],
         verification_code=vc,
     )
+
+
+async def get_user_by_email(conn: asyncpg.Connection, email: str) -> User | None:
+    row = await conn.fetchrow(_USER_COLS + "WHERE u.email = $1", email)
+    if row is None:
+        return None
+    return _row_to_user(row)
+
+
+async def get_user_by_id_with_lock(conn: asyncpg.Connection, user_id: UUID) -> User | None:
+    row = await conn.fetchrow(
+        _USER_COLS + "WHERE u.id = $1 FOR UPDATE OF u",
+        user_id,
+    )
+    if row is None:
+        return None
+    return _row_to_user(row)
 
 
 async def activate_user(conn: asyncpg.Connection, user_id: UUID):

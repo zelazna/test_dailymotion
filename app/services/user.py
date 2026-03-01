@@ -9,7 +9,7 @@ from httpx import HTTPError, RequestError
 from app.core.config import settings
 from app.core.logging import logger
 from app.core.security import get_password_hash, verify_password
-from app.db.user import User, activate_user, create_user, get_user_by_email
+from app.db.user import User, activate_user, create_user, get_user_by_email, get_user_by_id_with_lock
 from app.db.verification_code import create_verification_code
 from app.services.resend_client import ResendClient
 
@@ -79,20 +79,26 @@ class UserService:
         return user
 
     async def activate_user(self, user: User, code: str) -> bool:
-        # Should be idempotent
-        if user.is_active is True:
-            return True
+        async with self.conn.transaction():
+            # Re-fetch with a row-level lock so concurrent activation requests
+            # are serialised: the second request sees is_active=True and returns
+            # early instead of racing past the checks below.
+            locked = await get_user_by_id_with_lock(self.conn, user.id)
+            if locked is None:
+                raise CodeNotFoundError()
 
-        if not user.verification_code:
-            raise CodeNotFoundError()
+            if locked.is_active:
+                return True
 
-        # Code expired
-        if user.verification_code.expires_at < datetime.now(timezone.utc):
-            raise CodeExpiredError()
-        # Code mismatch
-        if user.verification_code.code != code:
-            raise CodeInvalidError()
+            if not locked.verification_code:
+                raise CodeNotFoundError()
 
-        await activate_user(self.conn, user.id)
+            if locked.verification_code.expires_at < datetime.now(timezone.utc):
+                raise CodeExpiredError()
+
+            if locked.verification_code.code != code:
+                raise CodeInvalidError()
+
+            await activate_user(self.conn, user.id)
 
         return True
