@@ -8,6 +8,7 @@ from httpx import HTTPError, RequestError
 from pwdlib import PasswordHash
 
 from app.core.config import settings
+from app.core.logging import logger
 from app.db.user import create_user
 from app.db.verification_code import create_verification_code
 from app.services.resend_client import ResendClient
@@ -24,8 +25,7 @@ async def _send_account_verification_code(
             f"<p>It expires in {settings.verification_code_ttl_seconds} seconds.</p>",
         )
     except (RequestError, HTTPError) as exc:
-        # TODO logger
-        print(exc)
+        logger.error("Failed to send verification email to {}: {}", email, exc)
 
 
 _password_hash = PasswordHash.recommended()
