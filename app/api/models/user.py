@@ -1,5 +1,6 @@
 from datetime import datetime
 from uuid import UUID
+
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
@@ -26,3 +27,7 @@ class UserResponse(BaseModel):
     id: UUID
     email: EmailStr
     created_at: datetime
+
+
+class ActivateUserRequest(BaseModel):
+    code: str = Field(pattern=r"^\d{4}$")  # Limit to 4 digits

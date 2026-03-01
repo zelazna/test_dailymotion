@@ -27,7 +27,8 @@ app.include_router(user_router, prefix=settings.API_V1_STR)
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     logger.debug(f"{request.method} {request.url}")
-    logger.debug(f"Headers: {dict(request.headers)}")
+    safe_headers = {k: v for k, v in request.headers.items() if k.lower() != "authorization"}
+    logger.debug(f"Headers: {safe_headers}")
     response = await call_next(request)
     logger.debug(f"Completed with status {response.status_code}")
     return response

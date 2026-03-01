@@ -15,10 +15,6 @@ from app.core.config import settings
 _client: "ResendClient | None" = None
 
 
-class HTTPError(Exception):
-    pass
-
-
 @dataclass
 class ResendClient:
     _http: httpx.AsyncClient
@@ -43,7 +39,10 @@ class ResendClient:
             with attempt:
                 response = await self._http.post(
                     f"{settings.smtp_api_host}/emails",
-                    headers={"Authorization": f"Bearer {settings.smtp_api_key}", "User-Agent": "test-app-dailymotion/1.0"},
+                    headers={
+                        "Authorization": f"Bearer {settings.smtp_api_key}",
+                        "User-Agent": "test-app-dailymotion/1.0",
+                    },
                     json={
                         "from": settings.email_from,
                         "to": [to],

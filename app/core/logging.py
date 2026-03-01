@@ -34,7 +34,7 @@ def configure_logging() -> None:
             "<cyan>{name}</cyan>:<cyan>{line}</cyan> - "
             "<level>{message}</level>"
         ),
-        colorize=True,
+        colorize=None,
     )
 
     # Intercept all standard-library loggers (uvicorn, asyncpg, …)
