@@ -5,12 +5,13 @@ from fastapi import FastAPI, status
 
 from app.api.routes.user import router as user_router
 from app.core.config import settings
-from app.core.pool import pool
+from app.db.pool import pool
+from app.services.resend_client import resend_client
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
-    async with pool():
+    async with pool(), resend_client():
         yield
 
 

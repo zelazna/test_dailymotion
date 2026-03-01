@@ -33,6 +33,8 @@ services:
       - "8000:8000"
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-appuser}:${POSTGRES_PASSWORD:-changeme}@db:5432/${POSTGRES_DB:-userdb}
+      SMTP_API_KEY: changeme
+      EMAIL_FROM: ${EMAIL_FROM:-delivered@resend.dev}
     depends_on:
       db:
         condition: service_healthy

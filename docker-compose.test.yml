@@ -34,6 +34,8 @@ services:
       target: test-runner
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-appuser}:${POSTGRES_PASSWORD:-changeme}@db_test:5432/${POSTGRES_DB_TEST:-testdb}
+      SMTP_API_KEY: ${SMTP_API_KEY-changeme}
+      EMAIL_FROM: ${EMAIL_FROM:-noreply@example.com}
       PYTHONPATH: /app
     depends_on:
       db_test:
