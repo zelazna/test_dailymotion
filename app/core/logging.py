@@ -3,6 +3,8 @@ import sys
 
 from loguru import logger
 
+from app.core.config import settings
+
 
 class _InterceptHandler(logging.Handler):
     """Route standard library logging through loguru."""
@@ -24,17 +26,17 @@ class _InterceptHandler(logging.Handler):
 
 
 def configure_logging() -> None:
+
     logger.remove()
     logger.add(
         sys.stdout,
-        level="INFO",
+        level=settings.log_level,
         format=(
             "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
             "<level>{level: <8}</level> | "
             "<cyan>{name}</cyan>:<cyan>{line}</cyan> - "
             "<level>{message}</level>"
         ),
-        colorize=None,
     )
 
     # Intercept all standard-library loggers (uvicorn, asyncpg, …)

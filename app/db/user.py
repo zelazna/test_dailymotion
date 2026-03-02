@@ -84,7 +84,9 @@ async def get_user_by_email(conn: asyncpg.Connection, email: str) -> User | None
     return _row_to_user(row)
 
 
-async def get_user_by_id_with_lock(conn: asyncpg.Connection, user_id: UUID) -> User | None:
+async def get_user_by_id_with_lock(
+    conn: asyncpg.Connection, user_id: UUID
+) -> User | None:
     row = await conn.fetchrow(
         _USER_COLS + "WHERE u.id = $1 FOR UPDATE OF u",
         user_id,
@@ -94,7 +96,7 @@ async def get_user_by_id_with_lock(conn: asyncpg.Connection, user_id: UUID) -> U
     return _row_to_user(row)
 
 
-async def activate_user(conn: asyncpg.Connection, user_id: UUID):
+async def activate_user(conn: asyncpg.Connection, user_id: UUID) -> None:
     query = """
     UPDATE users
     SET is_active = TRUE

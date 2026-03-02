@@ -35,7 +35,7 @@ async def get_authenticated_user(
 ) -> User:
     if user := (
         await user_service.get_authenticated_user(
-           credentials.username, credentials.password
+            credentials.username, credentials.password
         )
     ):
         return user

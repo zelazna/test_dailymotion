@@ -9,7 +9,13 @@ from httpx import HTTPError, RequestError
 from app.core.config import settings
 from app.core.logging import logger
 from app.core.security import get_password_hash, verify_password
-from app.db.user import User, activate_user, create_user, get_user_by_email, get_user_by_id_with_lock
+from app.db.user import (
+    User,
+    activate_user,
+    create_user,
+    get_user_by_email,
+    get_user_by_id_with_lock,
+)
 from app.db.verification_code import create_verification_code
 from app.services.resend_client import ResendClient
 
@@ -37,7 +43,7 @@ async def _send_account_verification_code(
             f"<p>It expires in {settings.verification_code_ttl_seconds} seconds.</p>",
         )
     except (RequestError, HTTPError) as exc:
-        logger.error("Failed to send verification email to {}: {}", email, exc)
+        logger.error(f"Failed to send verification email to {email}: {exc!r}")
 
 
 @dataclass

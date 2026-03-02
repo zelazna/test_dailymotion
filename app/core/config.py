@@ -14,5 +14,7 @@ class Settings(BaseSettings):
     smtp_max_retries: int = 3
     smtp_retry_max_wait: float = 30.0
 
+    log_level: str = "INFO"
+
 
 settings = Settings()  # pyright: ignore[reportCallIssue]

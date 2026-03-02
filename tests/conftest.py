@@ -39,6 +39,7 @@ async def client():
     ) as c:
         yield c
 
+
 @pytest.fixture(autouse=True)
 async def clean_db(init_db):
     yield
