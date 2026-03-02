@@ -38,7 +38,7 @@ async def authenticated_client(user_factory):
         yield c
 
 
-async def test_create_user(client, resend_client, monkeypatch):
+async def test_create_user(client, mock_celery_task, monkeypatch):
     monkeypatch.setattr("app.services.user.secrets.randbelow", lambda _: 2768)
     response = await client.post(URL, json=USER_PAYLOAD)
     assert response.status_code == 201
@@ -48,11 +48,7 @@ async def test_create_user(client, resend_client, monkeypatch):
         "id": data["id"],
         "created_at": data["created_at"],
     }
-    resend_client.send_email.assert_called_once_with(
-        to="test@example.com",
-        subject="Your verification code",
-        html="<p>Your verification code is: <strong>2768</strong></p><p>It expires in 60 seconds.</p>",
-    )
+    mock_celery_task.delay.assert_called_once_with("2768", "test@example.com")
 
 
 async def test_create_user_duplicate_email(client):

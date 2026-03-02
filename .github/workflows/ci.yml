@@ -67,3 +67,4 @@ jobs:
           SMTP_API_KEY: changeme
           EMAIL_FROM: noreply@example.com
           PYTHONPATH: .
+          RABBITMQ_URL: amqp://guest:guest@rabbitmq_test:5672//

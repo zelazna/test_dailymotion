@@ -4,6 +4,8 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     database_url: PostgresDsn
+    rabbitmq_url: str
+
     API_V1_STR: str = "/api/v1"
 
     smtp_api_key: str

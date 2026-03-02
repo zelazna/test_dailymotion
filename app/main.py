@@ -8,7 +8,6 @@ from app.api.routes.user import router as user_router
 from app.core.config import settings
 from app.core.logging import configure_logging, logger
 from app.db.pool import pool
-from app.services.resend_client import resend_client
 
 configure_logging()
 
@@ -27,7 +26,7 @@ _tags_metadata = [
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
     logger.info("Starting up")
-    async with pool(), resend_client():
+    async with pool():
         yield
     logger.info("Shut down")
 

@@ -1,6 +1,6 @@
 # User Registration API
 
-A user registration and email verification API built with FastAPI and PostgreSQL.
+A user registration and email verification API built with FastAPI, PostgreSQL, and Celery backed by RabbitMQ.
 
 ## Running the application
 
@@ -8,9 +8,11 @@ A user registration and email verification API built with FastAPI and PostgreSQL
 docker compose up --build
 ```
 
-This starts two containers:
+This starts four containers:
 
 - **api** — FastAPI application on http://localhost:8000
+- **worker** — Celery worker (email delivery)
+- **rabbitmq** — RabbitMQ message broker
 - **db** — PostgreSQL 16
 
 The API is ready when `docker compose up` shows the uvicorn startup log. You can also check:
@@ -66,16 +68,20 @@ graph TD
         Models["Pydantic Models"]
     end
 
-    subgraph Services["Service layer"]
+    subgraph API["FastAPI"]
         UserService["UserService"]
-        ResendClient["ResendClient"]
-        HttpPool["httpx.AsyncClient"]
     end
 
     subgraph DB["Database layer"]
         Pool["asyncpg Pool"]
         UserDB["db/user"]
         CodeDB["db/verification_code"]
+    end
+
+    subgraph Async["Async layer"]
+        Queue[("RabbitMQ")]
+        Worker["Celery Worker"]
+        HttpPool["httpx.Client"]
     end
 
     External["Resend API"]
@@ -85,13 +91,14 @@ graph TD
     Routes --> Depends
     Routes --> Models
     Depends --> UserService
-    UserService --> ResendClient
     UserService --> UserDB
     UserService --> CodeDB
     UserDB --> Pool
     CodeDB --> Pool
     Pool --> Postgres
-    ResendClient --> HttpPool
+    UserService --> Queue
+    Queue --> Worker
+    Worker --> HttpPool
     HttpPool --> External
 ```
 
@@ -105,6 +112,8 @@ sequenceDiagram
     participant Route as POST /users
     participant Service as UserService
     participant DB as PostgreSQL
+    participant MQ as RabbitMQ
+    participant Worker as Celery Worker
     participant Email as Resend API
 
     Client->>Route: POST /users {email, password}
@@ -114,9 +123,11 @@ sequenceDiagram
     Service->>DB: INSERT users → id
     Service->>DB: INSERT verification_codes (code, expires_at)
     Service->>DB: COMMIT
+    Service-)MQ: send_verification_email.delay(code, email)
     Service-->>Route: User
     Route-->>Client: 201 {id, email, created_at}
-    Route-)Email: (background) send verification code email
+    MQ-)Worker: dequeue task
+    Worker->>Email: POST /emails
 ```
 
 ---

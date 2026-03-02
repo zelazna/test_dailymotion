@@ -1,13 +1,11 @@
-from unittest.mock import AsyncMock
+from unittest.mock import MagicMock
 
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from app.api.depends import get_email_service
 from app.db.pool import get_pool
 from app.db.pool import pool as db_pool
 from app.main import app
-from app.services.resend_client import ResendClient
 
 
 @pytest.fixture(scope="session")
@@ -24,12 +22,10 @@ async def db_connection(init_db):
 
 
 @pytest.fixture(autouse=True)
-async def resend_client():
-    mock_email = ResendClient(_http=AsyncMock())
-    mock_email.send_email = AsyncMock()
-    app.dependency_overrides[get_email_service] = lambda: mock_email
-    yield mock_email
-    app.dependency_overrides.clear()
+def mock_celery_task(monkeypatch):
+    mock_task = MagicMock()
+    monkeypatch.setattr("app.services.user.send_verification_email", mock_task)
+    return mock_task
 
 
 @pytest.fixture

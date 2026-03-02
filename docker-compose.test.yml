@@ -6,7 +6,6 @@
 name: user-registration-api
 
 services:
-
   db_test:
     image: postgres:16-alpine
     environment:
@@ -19,7 +18,11 @@ services:
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-appuser} -d ${POSTGRES_DB_TEST:-testdb}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-appuser} -d ${POSTGRES_DB_TEST:-testdb}",
+        ]
       interval: 3s
       timeout: 3s
       retries: 15
@@ -34,8 +37,9 @@ services:
       target: test-runner
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-appuser}:${POSTGRES_PASSWORD:-changeme}@db_test:5432/${POSTGRES_DB_TEST:-testdb}
-      SMTP_API_KEY: ${SMTP_API_KEY-changeme}
+      SMTP_API_KEY: ${SMTP_API_KEY:-changeme}
       EMAIL_FROM: ${EMAIL_FROM:-noreply@example.com}
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASSWORD:-guest}@rabbitmq_test:5672//
       PYTHONPATH: /app
     depends_on:
       db_test:

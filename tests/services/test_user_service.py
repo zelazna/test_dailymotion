@@ -1,16 +1,11 @@
 import pytest
-from fastapi import BackgroundTasks
 
 from app.services.user import UserService
 
 
 @pytest.fixture
-async def service(db_connection, resend_client):
-    yield UserService(
-        conn=db_connection,
-        email_service=resend_client,
-        background_tasks=BackgroundTasks(),
-    )
+async def service(db_connection):
+    yield UserService(conn=db_connection)
 
 
 async def test_create_user_returns_user(service, monkeypatch):
